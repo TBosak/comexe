@@ -1,0 +1,103 @@
+﻿@page "/"
+@using SharpCompress.Archives.Rar
+@using System.Collections.ObjectModel
+@using System.Reflection
+
+<h1>Comic Book Reader</h1>
+<InputFile OnChange="@LoadFiles" multiple />
+<hr />
+<button @onclick="FirstPage">
+First Page
+</button>
+<button @onclick="PrevPage">
+Previous Page
+</button>
+<button @onclick="NextPage">
+Next Page
+</button>
+<button @onclick="LastPage">
+Last Page
+</button>
+<img style="height:100%;width:100%;" src="@imageURL">
+@*@foreach (var entry in entries)
+			{
+				<tr>
+					<td>@entry.Key</td>
+				</tr>
+            }*@
+
+@code {
+    string imageURL = "";
+    List<RarArchiveEntry> entries = new List<RarArchiveEntry>();
+    int currentPage = -1;
+    string currentPath = "";
+
+    private async void LoadFiles(InputFileChangeEventArgs e)
+    {
+        var file = e.File.OpenReadStream(92865494000);
+        var assembly = IntrospectionExtensions.GetTypeInfo(typeof(MauiProgram)).Assembly.Location;
+        var newFile = assembly.Replace("comexe.dll", $"wwwroot\\{e.File.Name}");
+        FileStream fs = File.Create(newFile);
+        await file.CopyToAsync(fs);
+        file.Close();
+        fs.Close();
+        currentPath = newFile;
+    }
+
+
+    private async Task FirstPage()
+    {
+        var archive = RarArchive.Open(currentPath);
+        entries = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ToList();
+        var entry = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).First();
+        var stream = entry.OpenEntryStream();
+        MemoryStream ms = new MemoryStream();
+        stream.CopyTo(ms);
+        byte[] byteArray = ms.ToArray();
+        var b64String = Convert.ToBase64String(byteArray);
+        imageURL = "data:image/png;base64," + b64String;
+        currentPage = 0;
+    }
+
+    private async Task LastPage()
+    {
+        var archive = RarArchive.Open(currentPath);
+        entries = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ToList();
+        var entry = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).Last();
+        var stream = entry.OpenEntryStream();
+            MemoryStream ms = new MemoryStream();
+            stream.CopyTo(ms);
+            byte[] byteArray = ms.ToArray();
+            var b64String = Convert.ToBase64String(byteArray);
+            imageURL = "data:image/png;base64," + b64String;
+            currentPage = entries.Count() - 1;
+    }
+
+    private async Task NextPage()
+    {
+        var archive = RarArchive.Open(currentPath);
+        entries = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ToList();
+        var entry = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ElementAt(currentPage + 1);
+        var stream = entry.OpenEntryStream();
+            MemoryStream ms = new MemoryStream();
+            stream.CopyTo(ms);
+            byte[] byteArray = ms.ToArray();
+            var b64String = Convert.ToBase64String(byteArray);
+            imageURL = "data:image/png;base64," + b64String;
+            currentPage = currentPage + 1;
+    }
+
+        private async Task PrevPage()
+    {
+        var archive = RarArchive.Open(currentPath);
+        entries = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ToList();
+        var entry = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ElementAt(currentPage - 1);
+        var stream = entry.OpenEntryStream();
+            MemoryStream ms = new MemoryStream();
+            stream.CopyTo(ms);
+            byte[] byteArray = ms.ToArray();
+            var b64String = Convert.ToBase64String(byteArray);
+            imageURL = "data:image/png;base64," + b64String;
+            currentPage = currentPage - 1;
+    }
+}
