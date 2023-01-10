@@ -1,41 +1,25 @@
 ﻿@page "/collection"
-@*@using SharpCompress.Archives
+@using LiteDB
+@using SharpCompress.Archives
 @using SharpCompress.Archives.Rar
-@inject HttpClient Http
-@inject IJSRuntime JS
 
-<h1>Stream Image Data Example</h1>
-
-<p>
-    <img id="image" />
-</p>
-
-<button @onclick="SetImageAsync">
-    Set Image
-</button>
-
-@code {
-    private async Task<Stream> GetImageStreamAsync()
-    {
-        HttpClient client = new();
-        return await client.GetStreamAsync(
-            "https://avatars.githubusercontent.com/u/9141961");
-    }
-
-    private async Task SetImageAsync()
-    {
-        var imageStream = await GetImageStreamAsync();
-        var dotnetImageStream = new DotNetStreamReference(imageStream);
-        await JS.InvokeVoidAsync("setImage", "image", dotnetImageStream);
-    }
-
-        //private void IncrementCount()
-    //{
-    //    var archive = RarArchive.Open("B:/Tim/Comics/test.cbr");
-    //    foreach (var entry in archive.Entries.Where(entry => !entry.IsDirectory))
-    //        entry.OpenEntryStream();
-    //    //entry.WriteToDirectory("B:/Tim/Comics/Downloads");
-        
-    //}
+<button onclick="@Display">Display Collection</button>
+@if (collection != null)
+{
+    <ul>
+        @foreach (var item in collection)
+        {
+            <li>
+                @item.Id
+            </li>
+        }
+    </ul>
 }
-*@
+@code {
+    IEnumerable<LiteFileInfo<string>> collection;
+    private async Task Display()
+    {
+        var fs = new LiteDatabase($"{FileSystem.Current.AppDataDirectory}\\Collection.db").FileStorage;
+        collection = fs.FindAll();
+    }
+}
