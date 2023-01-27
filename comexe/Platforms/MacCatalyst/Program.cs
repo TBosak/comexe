@@ -1,7 +1,7 @@
 ﻿using ObjCRuntime;
 using UIKit;
 
-namespace comexe;
+namespace Comexe;
 
 public class Program
 {

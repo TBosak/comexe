@@ -1,6 +1,6 @@
 ﻿using Foundation;
 
-namespace comexe;
+namespace Comexe;
 
 [Register("AppDelegate")]
 public class AppDelegate : MauiUIApplicationDelegate

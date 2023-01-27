@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.WebView.Maui;
-using comexe.Data;
+using Comexe.Data;
 
-namespace comexe;
+namespace Comexe;
 
 public static class MauiProgram
 {

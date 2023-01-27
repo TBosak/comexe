@@ -1,4 +1,4 @@
-﻿namespace comexe;
+﻿namespace Comexe;
 
 public partial class MainPage : ContentPage
 {

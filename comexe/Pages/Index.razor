@@ -1,5 +1,4 @@
 ﻿@page "/"
-@using LiteDB
 @using SharpCompress.Archives.Rar
 @using System.Collections.ObjectModel
 @using System.Reflection
@@ -214,11 +213,5 @@ Last Page
         byte[] byteArray = ms.ToArray();
         var b64String = Convert.ToBase64String(byteArray);
         imageURL = "data:image/png;base64," + b64String;
-    }
-
-    private async Task Collect()
-    {
-        var fs = new LiteDatabase($"{FileSystem.Current.AppDataDirectory}\\Collection.db").FileStorage;
-        fs.Upload(fileName, currentPath);
     }
 }

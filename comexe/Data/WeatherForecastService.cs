@@ -1,4 +1,4 @@
-namespace comexe.Data;
+namespace Comexe.Data;
 
 public class WeatherForecastService
 {
