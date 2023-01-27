@@ -3,9 +3,11 @@
 @using SharpCompress.Archives.Rar
 @using System.Collections.ObjectModel
 @using System.Reflection
+@using SharpCompress.Archives.Zip
+
 
 <h1>Comic Book Reader</h1>
-<InputFile OnChange="@LoadFiles" multiple />
+<InputFile OnChange="@LoadFiles" accept=".cbr,.cbz,.rar,.zip"/>
 <hr />
 @if (readReady && initialized)
 {
@@ -39,7 +41,8 @@ Last Page
     string imageURL = "";
     string fileName = "";
     Stream file;
-    List<RarArchiveEntry> entries = new List<RarArchiveEntry>();
+    List<ZipArchiveEntry> zipEntries;
+    List<RarArchiveEntry> rarEntries;
     int currentPage = 0;
     int lastPageIndex = 0;
     int pageNumber = 0;
@@ -76,8 +79,16 @@ Last Page
     {
         if (readReady && initialized)
         {
-            var entry = entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).First();
-            await StreamImage(entry);
+            if (fileName.Last() == 'z' || fileName.Last() == 'p')
+            {
+                var entry = zipEntries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).First();
+                await StreamImage(entry);
+            }
+            if (fileName.Last() == 'r')
+            {
+                var entry = rarEntries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).First();
+                await StreamImage(entry);
+            }
             currentPage = 0;
             pageNumber = 1;
         }
@@ -88,9 +99,18 @@ Last Page
     {
         if (readReady && initialized)
         {
-            var entry = entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).Last();
-            await StreamImage(entry);
-            pageNumber = entries.Count();
+            if (fileName.Last() == 'z' || fileName.Last() == 'p')
+            {
+                var entry = zipEntries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).Last();
+                await StreamImage(entry);
+                pageNumber = zipEntries.Count();
+            }
+            if (fileName.Last() == 'r')
+            {
+                var entry = rarEntries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).Last();
+                await StreamImage(entry);
+                pageNumber = rarEntries.Count();
+            }
             currentPage = pageNumber - 1;
         }
 
@@ -102,8 +122,17 @@ Last Page
         {
             try
             {
-                var entry = entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ElementAt(currentPage + 1);
-                await StreamImage(entry);
+                if (fileName.Last() == 'z' || fileName.Last() == 'p')
+                {
+                    var entry = zipEntries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ElementAt(currentPage + 1);
+                    await StreamImage(entry);
+                }
+                if (fileName.Last() == 'r')
+                {
+                    var entry = rarEntries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ElementAt(currentPage + 1);
+                    await StreamImage(entry);
+                }
+
                 pageNumber++;
                 currentPage = currentPage + 1;
             }
@@ -121,8 +150,17 @@ Last Page
         {
             try
             {
-                var entry = entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ElementAt(currentPage - 1);
-                await StreamImage(entry);
+                if (fileName.Last() == 'z' || fileName.Last() == 'p')
+                {
+                    var entry = zipEntries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ElementAt(currentPage - 1);
+                    await StreamImage(entry);
+                }
+                if (fileName.Last() == 'r')
+                {
+                    var entry = rarEntries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ElementAt(currentPage - 1);
+                    await StreamImage(entry);
+                }
+
                 pageNumber--;
                 currentPage = currentPage - 1;
             }
@@ -139,15 +177,36 @@ Last Page
     {
         if (!initialized)
         {
-            var archive = RarArchive.Open(currentPath);
-            entries = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ToList();
-            lastPage = archive.Entries.Where(entry => !entry.IsDirectory).Count();
+            if (fileName.Last() == 'z' || fileName.Last() == 'p')
+            {
+                var archive = ZipArchive.Open(currentPath);
+                zipEntries = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ToList();
+                lastPage = archive.Entries.Where(entry => !entry.IsDirectory).Count();
+            }
+            if (fileName.Last() == 'r')
+            {
+                var archive = RarArchive.Open(currentPath);
+                rarEntries = archive.Entries.Where(entry => !entry.IsDirectory).OrderBy(x=>x.Key).ToList();
+                lastPage = archive.Entries.Where(entry => !entry.IsDirectory).Count();
+            }
             lastPageIndex = lastPageIndex - 1;
             initialized = true;
         }
     }
 
+    //Can we use entry.key to catch filetype & print out txt or doc(hard?)?
+    //Add epub reader functionality as well?
     private async Task StreamImage(RarArchiveEntry entry)
+    {
+        var stream = entry.OpenEntryStream();
+        MemoryStream ms = new MemoryStream();
+        stream.CopyTo(ms);
+        byte[] byteArray = ms.ToArray();
+        var b64String = Convert.ToBase64String(byteArray);
+        imageURL = "data:image/png;base64," + b64String;
+    }
+
+        private async Task StreamImage(ZipArchiveEntry entry)
     {
         var stream = entry.OpenEntryStream();
         MemoryStream ms = new MemoryStream();
