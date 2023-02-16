@@ -1,2 +1,2 @@
 # comexe
-Blazor MAUI comic book reader app
+Very basic Blazor MAUI comic book reader app
